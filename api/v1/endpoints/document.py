@@ -3,7 +3,9 @@ from fastapi import APIRouter, File, UploadFile
 from api.schemas import (
     DocumentExtractResponse,
     LabResultLineResponse,
+    NormalizedUnitSchema,
     NormalizedValueSchema,
+    UnitTypeSchema,
     ValueTypeSchema,
 )
 from services.document_service import DocumentService
@@ -47,6 +49,11 @@ async def extract_document(
                     numeric_value=line.normalized.numeric_value,
                     range_low=line.normalized.range_low,
                     range_high=line.normalized.range_high,
+                ),
+                normalized_unit=NormalizedUnitSchema(
+                    raw=line.normalized_unit.raw,
+                    unit_type=UnitTypeSchema(line.normalized_unit.unit_type.value),
+                    canonical=line.normalized_unit.canonical,
                 ),
             )
             for line in result.results

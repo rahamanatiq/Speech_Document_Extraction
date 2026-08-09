@@ -1,24 +1,32 @@
-
 from dataclasses import dataclass
- 
+
 from adapters.ocr.base import OCRProvider, OCRResult
 from adapters.ocr.mock_adapter import MockOCRProvider
 from core.config import settings
 from core.exceptions import FileTooLargeError, ProviderError, UnsupportedFormatError
-from services.normalizer import NormalizedValue, ValueType, normalize_value
- 
+from services.normalizer import (
+    DateType,
+    NormalizedDate,
+    NormalizedUnit,
+    NormalizedValue,
+    ValueType,
+    normalize_date,
+    normalize_unit,
+    normalize_value,
+)
+
 MAX_IMAGE_BYTES = 15 * 1024 * 1024  # 15 MB — generous for phone photos, rejects accidental huge uploads
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
- 
- 
+
+
 @dataclass
 class EnrichedLabResultLine:
-    """A LabResultLine plus its normalized value — built by the service
-    layer, on top of the adapter's raw output. Keeps adapters/ ignorant
-    of normalization entirely, preserving the one-way layer dependency
-    (api/ -> services/ -> adapters/, never the reverse).
+    """A LabResultLine plus its normalized value and unit — built by the
+    service layer, on top of the adapter's raw output. Keeps adapters/
+    ignorant of normalization entirely, preserving the one-way layer
+    dependency (api/ -> services/ -> adapters/, never the reverse).
     """
- 
+
     raw_line: str
     test_name: str | None
     value: str | None
@@ -26,19 +34,21 @@ class EnrichedLabResultLine:
     reference_range: str | None
     flag: str | None
     normalized: NormalizedValue
- 
- 
+    normalized_unit: NormalizedUnit
+
+
 @dataclass
 class DocumentExtractionResult:
     """What DocumentService returns to api/ — the OCRResult's data,
-    enriched with normalized values for each result line."""
- 
+    enriched with normalized values/units per result line, and a
+    best-effort normalized report_date in meta."""
+
     raw_text: str
     meta: dict[str, str]
     results: list[EnrichedLabResultLine]
     confidence: float | None
- 
- 
+
+
 def get_ocr_provider() -> OCRProvider:
     """Factory: returns whichever OCR provider is configured. One single
     switch point — change OCR_PROVIDER in .env, and every caller of this
@@ -51,38 +61,37 @@ def get_ocr_provider() -> OCRProvider:
         # to import. Deferring this keeps the default (mock) path fast and
         # dependency-free.
         from adapters.ocr.easyocr_adapter import EasyOCRProvider
- 
+
         return EasyOCRProvider()
- 
+
     raise ValueError(f"Unknown ocr_provider configured: {settings.ocr_provider!r}")
- 
- 
+
+
 class DocumentService:
     """Orchestrates a document extraction request: validates input,
     delegates to whichever OCR provider is configured, and enriches the
-    raw result with normalized values. api/ talks to this class only,
+    raw result with normalized values/units. api/ talks to this class only,
     never to adapters/ directly.
     """
- 
+
     def __init__(self, provider: OCRProvider | None = None) -> None:
-        # Optional injected provider makes this class unit-testable in
-        # isolation, without touching global settings.
         self._provider = provider or get_ocr_provider()
- 
+
     def extract(self, filename: str, image_bytes: bytes) -> DocumentExtractionResult:
         self._validate(filename, image_bytes)
- 
+
         try:
             raw_result = self._provider.extract(image_bytes)
         except Exception as exc:
             # Any unexpected provider failure becomes our own domain
             # exception — api/ only ever needs to handle ProviderError.
             raise ProviderError(f"OCR provider failed: {exc}") from exc
- 
+
         return self._enrich(raw_result)
- 
+
     def _enrich(self, raw_result: OCRResult) -> DocumentExtractionResult:
-        """Adds a NormalizedValue to every result line, without ever
+        """Adds a NormalizedValue and NormalizedUnit to every result line,
+        and a best-effort canonical report_date to meta, without ever
         touching or reinterpreting what the adapter already returned.
         """
         enriched_lines = [
@@ -101,24 +110,43 @@ class DocumentService:
                     # None, just mark it unparseable directly.
                     else NormalizedValue(raw="", value_type=ValueType.UNPARSEABLE)
                 ),
+                normalized_unit=normalize_unit(line.unit),
             )
             for line in raw_result.results
         ]
- 
+
+        meta = self._normalize_meta_dates(raw_result.meta)
+
         return DocumentExtractionResult(
             raw_text=raw_result.raw_text,
-            meta=raw_result.meta,
+            meta=meta,
             results=enriched_lines,
             confidence=raw_result.confidence,
         )
- 
+
+    def _normalize_meta_dates(self, meta: dict[str, str]) -> dict[str, str]:
+        """report_date is the one meta field with a defined canonical form
+        (ISO YYYY-MM-DD, per the brief). Only overwritten when confidently
+        parsed — matching the 'never guess' rule — and the original is kept
+        alongside it as report_date_raw rather than discarded.
+        """
+        if "report_date" not in meta:
+            return meta
+
+        result = dict(meta)
+        normalized_date: NormalizedDate = normalize_date(meta["report_date"])
+        if normalized_date.date_type == DateType.EXACT:
+            result["report_date_raw"] = meta["report_date"]
+            result["report_date"] = normalized_date.iso_date  # type: ignore[assignment]
+        return result
+
     def _validate(self, filename: str, image_bytes: bytes) -> None:
         extension = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if extension not in ALLOWED_EXTENSIONS:
             raise UnsupportedFormatError(
                 f"'{extension}' is not supported. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             )
- 
+
         if len(image_bytes) > MAX_IMAGE_BYTES:
             raise FileTooLargeError(
                 f"File is {len(image_bytes)} bytes, exceeds the {MAX_IMAGE_BYTES} byte limit"
