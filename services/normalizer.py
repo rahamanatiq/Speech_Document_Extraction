@@ -111,7 +111,7 @@ def _looks_like_range(text: str) -> bool:
     # Requires a hyphen with a digit on both sides — avoids false-triggering
     # on a plain negative number like "-5".
     parts = text.split("-")
-    return len(parts) == 2 and parts[0].strip() and parts[1].strip()
+    return len(parts) == 2 and bool(parts[0].strip()) and bool(parts[1].strip())
 
 
 def _split_range(text: str) -> tuple[float | None, float | None]:
