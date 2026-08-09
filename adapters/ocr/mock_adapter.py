@@ -19,7 +19,11 @@ class MockOCRProvider(OCRProvider):
 
         raw_text = (
             "Patient: John Doe\n"
-            "Date: 2026-03-14\n"
+            "Age: 45\n"
+            "Sex: Male\n"
+            "Report Date: 14-03-2026\n"
+            "Lab: City Diagnostic Center\n"
+            "Ref No: RC-2026-00417\n"
             "Hemoglobin  13.5  g/dL  (13.0-17.0)\n"
             "WBC Count   l2.S  x10^3/uL  (4.0-11.0)  High\n"
             "Platelet    <0.5  x10^3/uL  (150-410)\n"
@@ -48,7 +52,7 @@ class MockOCRProvider(OCRProvider):
             ),
             LabResultLine(
                 # Deliberately a "less-than" value — tests that normalizer.py
-                # (coming soon) handles comparison operators, not just plain numbers.
+                # handles comparison operators, not just plain numbers.
                 raw_line="Platelet    <0.5  x10^3/uL  (150-410)",
                 test_name="Platelet",
                 value="<0.5",
@@ -60,7 +64,14 @@ class MockOCRProvider(OCRProvider):
 
         return OCRResult(
             raw_text=raw_text,
-            meta={"patient_name": "John Doe", "report_date": "2026-03-14"},
+            meta={
+                "patient_name": "John Doe",
+                "age": "45",
+                "sex": "Male",
+                "report_date": "14-03-2026",
+                "lab_name": "City Diagnostic Center",
+                "reference_no": "RC-2026-00417",
+            },
             results=results,
             confidence=0.88,
         )
