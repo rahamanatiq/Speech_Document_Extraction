@@ -52,3 +52,11 @@ class DocumentExtractResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str = Field(..., description="Machine-readable error type, e.g. 'UnsupportedFormatError'")
     detail: str = Field(..., description="Human-readable explanation of what went wrong")
+
+
+class TranscribeResponse(BaseModel):
+    raw_text: str
+    language: str
+    duration_seconds: float
+    confidence: float | None = None
+    provider: str = Field(..., description="Which provider produced this result, e.g. 'mock' or 'whisper'")

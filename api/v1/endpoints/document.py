@@ -24,7 +24,7 @@ async def extract_document(
     image_bytes = await file.read()
 
     service = DocumentService()
-    result = service.extract(filename=file.filename, image_bytes=image_bytes)
+    result = service.extract(filename=file.filename or "", image_bytes=image_bytes)
 
     return DocumentExtractResponse(
         raw_text=result.raw_text,

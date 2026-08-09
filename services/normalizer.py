@@ -29,7 +29,7 @@ class NormalizedValue:
     range_high: float | None = None      # populated for RANGE
 
 
-def normalize_value(raw: str) -> NormalizedValue:
+def normalize_value(raw: str | None) -> NormalizedValue:
     """Parse a raw lab-value string into structured form.
 
     Deliberately conservative: if the string doesn't clearly match one of

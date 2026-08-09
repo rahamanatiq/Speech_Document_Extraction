@@ -2,9 +2,9 @@ from fastapi import APIRouter, File, Form, UploadFile
 
 from api.schemas import TranscribeResponse
 from services.transcribe_service import TranscriptionService
+from core.config import settings
 
 router = APIRouter()
-
 
 @router.post("/transcribe", response_model=TranscribeResponse)
 async def transcribe_audio(
@@ -22,11 +22,13 @@ async def transcribe_audio(
     audio_bytes = await file.read()
 
     service = TranscriptionService()
-    result = service.transcribe(filename=file.filename, audio_bytes=audio_bytes, language=language)
+    result = service.transcribe(filename=file.filename or "", audio_bytes=audio_bytes, language=language)
 
     return TranscribeResponse(
         raw_text=result.raw_text,
         language=result.language,
         duration_seconds=result.duration_seconds,
         confidence=result.confidence,
+        provider=settings.speech_provider,
     )
+

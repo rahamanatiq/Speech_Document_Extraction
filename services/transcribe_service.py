@@ -3,7 +3,7 @@ from adapters.transcription.mock_adapter import MockTranscriptionProvider
 from core.config import settings
 from core.exceptions import FileTooLargeError, ProviderError, UnsupportedFormatError
 
-MAX_AUDIO_BYTES = 20 * 1024 * 1024  # 20 MB — generous for short clips, rejects accidental huge uploads
+MAX_AUDIO_BYTES = 25 * 1024 * 1024  # 25 MB — generous for short clips, rejects accidental huge uploads
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".ogg"}
 
 

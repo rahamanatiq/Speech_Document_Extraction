@@ -149,7 +149,7 @@ def _preprocess(image):
     if min(image.size) < min_dimension:
         scale = min_dimension / min(image.size)
         new_size = (int(image.width * scale), int(image.height * scale))
-        image = image.resize(new_size, Image.LANCZOS)
+        image = image.resize(new_size, Image.Resampling.LANCZOS)
  
     return ImageEnhance.Contrast(image).enhance(1.3)
  

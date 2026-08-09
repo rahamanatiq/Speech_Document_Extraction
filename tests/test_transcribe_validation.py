@@ -15,7 +15,7 @@ def test_transcribe_rejects_unsupported_format(client):
 
 
 def test_transcribe_rejects_oversized_file(client):
-    huge_content = b"x" * (21 * 1024 * 1024)  # exceeds MAX_AUDIO_BYTES (20 MB)
+    huge_content = b"x" * (26 * 1024 * 1024)  # exceeds MAX_AUDIO_BYTES (25 MB)
     file = io.BytesIO(huge_content)
     response = client.post(
         "/api/v1/transcribe",
