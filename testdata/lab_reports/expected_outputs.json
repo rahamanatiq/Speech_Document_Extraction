@@ -1,0 +1,40 @@
+{
+  "report_clean.jpg": {
+    "notes": "Clearest of the set — baseline case for OCR accuracy comparison.",
+    "expected_meta_contains": ["Popular Diagnostic", "Litton Mia"],
+    "expected_results_sample": [
+      {"test_name": "Haemoglobin", "value": "14.70", "unit": "g/dL", "flag": null},
+      {"test_name": "Eosinophil%", "value": "11", "unit": "%", "flag": "H"},
+      {"test_name": "MCHC", "value": "31.8", "unit": "g/dL", "flag": "L"},
+      {"test_name": "Platelets", "value": "264", "unit": "K/µL", "flag": null}
+    ]
+  },
+  "report_angled.jpg": {
+    "notes": "Skewed/rotated photo of the same or similar report. Tests OCR robustness to non-straight capture angle.",
+    "expected_results_sample": []
+  },
+  "report_lowlight.jpg": {
+    "notes": "Poor lighting/shadow. Tests OCR robustness to degraded image quality. Contains a partial doctor-name fragment in one corner, otherwise redacted.",
+    "expected_results_sample": []
+  },
+  "report_cropped.jpg": {
+    "notes": "Header intentionally cropped out during PII redaction. Tests graceful handling of a report with missing/partial header metadata.",
+    "expected_meta_contains": [],
+    "expected_results_sample": [
+      {"test_name": "Crea", "value": "0.56", "unit": "mg/dl", "flag": null},
+      {"test_name": "RBS", "value": "106.1", "unit": "mg/dl", "flag": null}
+    ]
+  },
+  "report_complex.jpg": {
+    "notes": "Dense multi-section layout (CBC + differential + blood group + chemistry all on one page). Stress test for parsing a busier table structure.",
+    "expected_results_sample": [
+      {"test_name": "Hemoglobin", "value": "14.5", "unit": "g/dl", "flag": null},
+      {"test_name": "Platelet Count", "value": "162000", "unit": "/cmm", "flag": null}
+    ]
+  },
+  "not_a_lab_report.jpg": {
+    "notes": "An ULTA Beauty store receipt — not a medical document at all. Tests that the service degrades gracefully (returns empty/low-confidence results) rather than fabricating fake lab data from unrelated content.",
+    "expected_meta_contains": [],
+    "expected_results_sample": []
+  }
+}

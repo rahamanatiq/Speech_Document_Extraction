@@ -1,0 +1,22 @@
+{
+  "clip_clean_en.m4a": {
+    "expected_text": "CBC test report shows hemoglobin level is 12.5 grams per deciliter",
+    "language": "en",
+    "notes": "Clean recording, no background noise. Baseline case."
+  },
+  "clip_clean_bn.m4a": {
+    "expected_text": "রোগীর রক্তের রিপোর্টে হিমোগ্লোবিনের পরিমাণ ১২.৫ গ্রাম প্রতি ডেসিলিটার।",
+    "language": "bn",
+    "notes": "Clean recording, no background noise. Tests Bangla transcription."
+  },
+  "clip_noisy_en.m4a": {
+    "expected_text": "I do not know what this report says about this particular patient and I wanted to know that",
+    "language": "en",
+    "notes": "Same speaker as clip_clean_en, deliberately different sentence, recorded with background noise. Tests robustness to noise."
+  },
+  "clip_silence.m4a": {
+    "expected_text": "",
+    "language": "en",
+    "notes": "Silent/no-speech recording. Tests the empty-transcription edge case explicitly called out in the assessment brief."
+  }
+}
